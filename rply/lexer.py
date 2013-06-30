@@ -50,7 +50,7 @@ class LexerStream(object):
                 self.idx = match.end
                 return token
         else:
-            raise LexingError(None, SourcePosition(self.idx, -1, -1))
+            raise LexingError(None, self.source_position(self.idx))
 
     def __next__(self):
         return self.next()
