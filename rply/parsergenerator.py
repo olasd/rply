@@ -122,20 +122,27 @@ class ParserGenerator(object):
         g.compute_first()
         g.compute_follow()
 
-        cache_file = os.path.join(
-            tempfile.gettempdir(),
-            "rply-%s-%s-%s.json" % (self.VERSION, self.cache_id, self.compute_grammar_hash(g))
-        )
+        try:
+            cache_file = os.path.join(
+                tempfile.gettempdir(),
+                "rply-%s-%s-%s.json" % (self.VERSION, self.cache_id, self.compute_grammar_hash(g))
+            )
+        except NotImplementedError:
+            cache_file = None
+
         table = None
-        if os.path.exists(cache_file):
+        if cache_file and os.path.exists(cache_file):
             with open(cache_file) as f:
                 data = json.load(f)
             if self.data_is_valid(g, data):
                 table = LRTable.from_cache(g, data)
+
         if table is None:
             table = LRTable.from_grammar(g)
-            with open(cache_file, "w") as f:
-                json.dump(self.serialize_table(table), f)
+            if cache_file:
+                with open(cache_file, "w") as f:
+                    json.dump(self.serialize_table(table), f)
+
         if table.sr_conflicts:
             warnings.warn(
                 "%d shift/reduce conflict%s" % (len(table.sr_conflicts), "s" if len(table.sr_conflicts) > 1 else ""),
